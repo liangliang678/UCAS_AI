@@ -1,7 +1,6 @@
 import sys
 import jieba
 
-
 class WordToken(object):
     def __init__(self):
         # 最小起始id号, 保留的用于表示特殊标记
@@ -12,9 +11,8 @@ class WordToken(object):
 
     def load_file_list(self, file_list, min_freq):
         """
-        加载样本文件列表，全部切词后统计词频，按词频由高到低排序后顺次编号
+        加载问题和回答文件，切词后统计词频，按词频由高到低排序后顺次编号
         并存到self.word2id_dict和self.id2word_dict中
-        file_list = [question, answer]
         min_freq: 最小词频，超过最小词频的词才会存入词表
         """
         words_count = {}
@@ -39,8 +37,8 @@ class WordToken(object):
             self.id2word_dict[self.START_ID + index] = word
         return index
 
+
     def word2id(self, word):
-        # 判断word是不是字符串
         if not isinstance(word, str):
             print("Exception: error word not unicode")
             sys.exit(1)
@@ -48,6 +46,7 @@ class WordToken(object):
             return self.word2id_dict[word]
         else:
             return None
+
 
     def id2word(self, id):
         id = int(id)
