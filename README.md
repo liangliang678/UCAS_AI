@@ -7,13 +7,32 @@
 ## 参考资料
 [中文聊天机器人的实现](https://blog.csdn.net/zzZ_CMing/article/details/81316033)
 
-[python chatterbot库](https://github.com/gunthercox/ChatterBot)
-
-[python chatterbot库使用教程](https://blog.csdn.net/LHWorldBlog/article/details/81039399)
-
 ## TODO
-1. 安装实验环境：pycharm + python3.7
-2. 继续测试该聊天机器人能否处理我们的训练集
-3. 分析源代码
-4. 改变源代码的输入输出格式。作业要求的输入输出格式为json。
-5. 按照实验要求，我们需要将给定的问答对随机划分为数据集、验证集和测试集（比例为7：1：2或8：1：1），随机划分的模块好像需要自己写。但是第一个参考资料的聊天机器人不需要验证集，直接划分数据集：测试集为8：2也行？[关于验证集与测试集的区别](https://www.cnblogs.com/morwing/p/12144476.html)。
+1. 生成模型
+2. 改变源代码的输出格式
+3. 分析代码
+
+## 代码分析
+### separate_data.py
+该程序将data目录下的qestion和answer按8:2的比例分为训练集和测试集，训练集的问题和回答为train_set_question和train_set_anwser，测试集的问题和参考回答为test_set_question和test_set_anwser。
+
+### word_token.py
+WordToken类有两个列表word2id_dict、id2word_dict，三种方法：
+1. load_file_list(file_list, min_freq)  
+加载file_list中的所有语句，使用[jieba库](https://github.com/fxsjy/jieba)切分成词语后统计词频，按词频由高到低排序后顺次编号并存到word2id_dict和id2word_dict中。由此就建立了词库，即word和id之间的双向映射。注意，超过最小词频min_freq的词才会存入列表。
+2. word2id(word)  
+由word返回id，若列表中没有该word则返回none
+3. id2word(id)  
+由id返回word
+
+我们在全局中使用load_file_list将源文件处理好并得到max_token_id。
+
+### main.py
+#### get_id_list_from(sentence)
+使用jieba库将sentence进行分词，将得到的每一个word的id加入一个列表中，返回该列表。
+
+#### get_train_set()
+将每一个问答对转换为id列表，由[question_id_list, answer_id_list]的形式存储在列表train_set中，返回train_set。注意，answer_id_list的末尾添加了一个EOS_ID表示结束。
+
+#### get_samples(train_set, batch_num)
+将train_set中的batch_num个问答对转化为向量的形式。矩阵encoder_input的行向量是数组，每一个列向量是问题；矩阵decoder_input的行向量是数组，每一个列向量是回答；矩阵target_weight的每一项表示矩阵decoder_input的每一项是否有意义。
