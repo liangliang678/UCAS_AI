@@ -24,35 +24,25 @@ index_filepath      = '../data/tfidf.index'     # 相似度比较序列路径
 
 # 随机划分数据集
 print("> 正在随机划分数据集")
+train = []
+test = []
 with open(data_filepath, encoding='utf-8') as original_file:
     data = json.load(original_file)
-    with open(train_filepath, 'w', encoding='utf-8') as train_file:
-        with open(test_filepath, 'w', encoding='utf-8') as test_file:
-            train_file_first = 1
-            test_file_first = 1
-            train_file.write('[')
-            test_file.write('[')
-            for value in data:
-                rand_num = random.uniform(0, 10)
-                if rand_num < 8.0:
-                    if train_file_first == 1:
-                        train_file_first = 0
-                        train_file.write(json.dumps(value, ensure_ascii=False))
-                    else:
-                        train_file.write(',')
-                        train_file.write(json.dumps(value, ensure_ascii=False))
-                else:
-                    if test_file_first == 1:
-                        test_file_first = 0
-                        test_file.write(json.dumps(value, ensure_ascii=False))
-                    else:
-                        test_file.write(',')
-                        test_file.write(json.dumps(value, ensure_ascii=False))
-            train_file.write(']')
-            test_file.write(']')
+    for value in data:
+        rand_num = random.uniform(0, 10)
+        if rand_num < 8.0:
+            train.append(value)
+        else:
+            test.append(value)
 
-with open(train_filepath, encoding='utf-8') as f:
-    data = json.load(f)
+print("  训练集：" + str(len(train)) + "  测试集" + str(len(test)))
+with open(train_filepath, 'w', encoding='utf-8') as train_file:
+    train_file.write(json.dumps(train, ensure_ascii=False))
+with open(test_filepath, 'w', encoding='utf-8') as test_file:
+    test_file.write(json.dumps(test, ensure_ascii=False))
+
+with open(train_filepath, encoding='utf-8') as train_file:
+    data = json.load(train_file)
 
 
 # 生成分词结果
@@ -86,34 +76,28 @@ index.save(index_filepath)
 
 
 # 导入测试集进行测试
-print("> 正在使用测试集测试")
 with open(test_filepath, encoding='utf-8') as test:
     test_data = json.load(test)
+print("> 正在使用测试集测试，共有" + str(len(test_data)) + "个问题")
 
 right = 0
-first = 1
+output_list = []
+for value in test_data:
+    question = value['question']
+    sentences = split_word(question)     # 分词
+    vec = dictionary.doc2bow(sentences)  # 转词袋表示
+    sims = index[tfidf[vec]]             # 相似度比较
+    sorted_sims = sorted(enumerate(sims), key=lambda x: x[1], reverse=True)  # 逆序
+    i = sorted_sims[0][0]
+
+    output_list.append({'question:':value['question'], 'answer':data[i]['answer']}) 
+    if(str(data[i]['answer']) == str(value['answer'])):
+        right = right + 1
+
 with open(output_filepath, 'w', encoding='utf-8') as output:
-    output.write("[")
-    for value in test_data:
-        question = value['question']
-        sentences = split_word(question)     # 分词
-        vec = dictionary.doc2bow(sentences)  # 转词袋表示
-        sims = index[tfidf[vec]]             # 相似度比较
-        sorted_sims = sorted(enumerate(sims), key=lambda x: x[1], reverse=True)  # 逆序
-        i = sorted_sims[0][0]
+    output.write(json.dumps(output_list, ensure_ascii=False))
 
-        if first:
-            first = 0
-        else:
-            output.write(",")
-        line = {'question:':value['question'], 'answer':data[i]['answer']}
-        output.write(json.dumps(line, ensure_ascii=False))
-
-        if(str(data[i]['answer']) == str(value['answer'])):
-            right = right + 1
-    output.write("]")
-
-print("  正确率：" + str(float(right/len(test_data)) * 100) + "%")
+print("  正确率至少为：" + str(float(right/len(test_data)) * 100) + "%")
 
 
 # 允许用户继续输入问题
