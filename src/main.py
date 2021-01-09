@@ -73,7 +73,6 @@ with open(test_filepath, encoding='utf-8') as test_file:
     test_data = json.load(test_file)
 print("> 正在使用测试集测试，共有" + str(len(test_data)) + "个问题")
 
-right = 0
 output = []
 for value in test_data:
     question = value['question']         # 获得问题
@@ -82,20 +81,12 @@ for value in test_data:
     sims = index[tfidf[vec]]             # 相似度比较
     sorted_sims = sorted(enumerate(sims), key=lambda x: x[1], reverse=True)
     i = sorted_sims[0][0]                # 最相似的问题的序号
-
-    # 输出问答对，若输出结果和参考结果不一致，则打印
+    # 输出问答对
     output.append({'question:':value['question'], 'answer':data[i]['answer']}) 
-    if(str(data[i]['answer']) == str(value['answer'])):
-        right = right + 1
-    else:
-        print("  答案不匹配：输出结果\""+str(data[i]['answer'])+"\"")
-        print("              参考结果\"" + str(value['answer']) + "\"")
 
 with open(output_filepath, 'w', encoding='utf-8') as output_file:
     output_file.write(json.dumps(output, ensure_ascii=False))
-
-print("  正确数量：" + str(right) + " / " + str(len(test_data)))
-print("  正确率：" + str(right / len(test_data) * 100) + "%")
+print("  测试完成，输出见outut.json")
 
 
 # 允许用户继续输入问题
